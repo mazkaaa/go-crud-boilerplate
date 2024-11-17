@@ -8,4 +8,5 @@ import (
 
 func RegisterRoutes(e *echo.Echo) {
 	e.GET("/users", controllers.GetUsers)
+	e.GET("/roles", controllers.GetRoles)
 }

@@ -9,12 +9,12 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func GetUsers(c echo.Context) error {
-	var users []models.User
+func GetRoles(c echo.Context) error {
+	var roles []models.Role
 
-	if err := config.DB.Find(&users).Error; err != nil {
+	if err := config.DB.Find(&roles).Error; err != nil {
 		return utils.SendResponse(c, nil, "Failed to fetch data", http.StatusInternalServerError)
 	}
 
-	return utils.SendResponse(c, users, "Success", http.StatusOK)
+	return utils.SendResponse(c, roles, "Success", http.StatusOK)
 }
