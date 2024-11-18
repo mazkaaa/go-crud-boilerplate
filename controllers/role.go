@@ -18,3 +18,13 @@ func GetRoles(c echo.Context) error {
 
 	return utils.SendResponse(c, roles, "Success", http.StatusOK)
 }
+
+func GetDetailRole(c echo.Context) error {
+	id := c.Param("id")
+	var role models.Role
+
+	if err := config.DB.Preload("Users").First(&role, "id = ?", id).Error; err != nil {
+		return utils.SendResponse(c, nil, "Role not found", http.StatusNotFound)
+	}
+	return utils.SendResponse(c, role, "Success", http.StatusOK)
+}
