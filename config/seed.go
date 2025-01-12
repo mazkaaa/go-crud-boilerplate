@@ -3,6 +3,7 @@ package config
 import (
 	"go-crud-boilerplate/models"
 	"log"
+	"os"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -17,14 +18,14 @@ func SeedRolesAndAdmin() {
 			log.Fatalf("failed to create default role: %v", err)
 		}
 
-		passwordHash, err := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
+		passwordHash, err := bcrypt.GenerateFromPassword([]byte(os.Getenv("SEED_PASSWORD")), bcrypt.DefaultCost)
 		if err != nil {
 			log.Fatalf("failed to hash password: %v", err)
 		}
 
 		adminUser := models.User{
-			Name:     "Admin",
-			Email:    "admin@example.com",
+			Name:     os.Getenv("SEED_NAME"),
+			Email:    os.Getenv("SEED_EMAIL"),
 			Password: string(passwordHash),
 			Role:     adminRole,
 		}
