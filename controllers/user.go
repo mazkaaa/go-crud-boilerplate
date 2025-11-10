@@ -17,15 +17,10 @@ func GetUsers(c echo.Context) error {
 		return utils.SendResponse(c, nil, "Failed to fetch data", http.StatusInternalServerError)
 	}
 
-	return utils.SendResponse(c, users, "Success", http.StatusOK)
+	return utils.SendResponse(c, users, "Successfully fetch all user data", http.StatusOK)
 }
 
 func CreateUser(c echo.Context) error {
-
-	findRole := config.DB.Where("id = ?", c.FormValue("role_id")).First(&models.Role{})
-	if findRole.Error != nil {
-		return utils.SendResponse(c, nil, "Role not found", http.StatusNotFound)
-	}
 
 	hashedPassword := utils.HashPassword(c.FormValue("password"))
 
@@ -34,6 +29,11 @@ func CreateUser(c echo.Context) error {
 		Email:    c.FormValue("email"),
 		Password: hashedPassword,
 		RoleID:   c.FormValue("role_id"),
+	}
+
+	findRole := config.DB.Where("id = ?", user.RoleID).First(&models.Role{})
+	if findRole.Error != nil {
+		return utils.SendResponse(c, nil, "Role not found", http.StatusNotFound)
 	}
 
 	if err := config.DB.Create(&user).Error; err != nil {

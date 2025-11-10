@@ -4,6 +4,7 @@ import (
 	"go-crud-boilerplate/config"
 	"go-crud-boilerplate/models"
 	"go-crud-boilerplate/routes"
+	"go-crud-boilerplate/utils"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
@@ -20,7 +21,7 @@ func main() {
 
 	config.DB.AutoMigrate(&models.User{}, &models.Role{})
 
-	config.SeedRolesAndAdmin()
+	utils.SeedRolesAndAdmin()
 
 	e := echo.New()
 	e.Use(middleware.Logger())

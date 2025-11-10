@@ -27,5 +27,5 @@ func DBConnect() {
 	}
 
 	DB = db
-	fmt.Println("database connection establised!")
+	log.Println("Database connection establised")
 }
