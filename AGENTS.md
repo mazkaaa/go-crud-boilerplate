@@ -57,6 +57,7 @@ All commits must follow [Conventional Commits](https://www.conventionalcommits.o
 
 Types: `feat`, `fix`, `build`, `chore`, `ci`, `docs`, `perf`, `refactor`, `revert`, `style`, `test`.
 Scope is optional (e.g., `auth`, `routes`, `db`, `users`, `roles`). Start description with lowercase, no period. Use imperative mood.
+If the body message is long, use bullet points or paragraphs. Footer can include breaking change notes or issue references.
 
 ## Commands
 
