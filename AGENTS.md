@@ -44,6 +44,20 @@ utils/
 
 No tests exist. No CI, linter, formatter, or Docker config.
 
+## Git
+
+All commits must follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+[optional footer]
+```
+
+Types: `feat`, `fix`, `build`, `chore`, `ci`, `docs`, `perf`, `refactor`, `revert`, `style`, `test`.
+Scope is optional (e.g., `auth`, `routes`, `db`, `users`, `roles`). Start description with lowercase, no period. Use imperative mood.
+
 ## Commands
 
 | Action | Command |
