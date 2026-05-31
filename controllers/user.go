@@ -27,7 +27,12 @@ func CreateUser(c echo.Context) error {
 		return utils.SendResponse(c, nil, "Role not found", http.StatusNotFound)
 	}
 
-	hashedPassword := utils.HashPassword(c.FormValue("password"))
+	hashedPassword, err := utils.HashPassword(c.FormValue("password"))
+
+	if err != nil {
+		log.Println("Failed to hash password: ", err)
+		return utils.SendResponse(c, err, "Failed to hash password", http.StatusInternalServerError)
+	}
 
 	user := &models.User{
 		Name:     c.FormValue("name"),
@@ -37,7 +42,7 @@ func CreateUser(c echo.Context) error {
 	}
 
 	if err := config.DB.Create(&user).Error; err != nil {
-		log.Fatalf("failed to create user: %v", err)
+		log.Println("failed to create user: ", err)
 		return utils.SendResponse(c, nil, err.Error(), http.StatusInternalServerError)
 	}
 	log.Println("User created successfully with ID: ", user.ID)

@@ -4,6 +4,7 @@ import (
 	"go-crud-boilerplate/config"
 	"go-crud-boilerplate/models"
 	"go-crud-boilerplate/utils"
+	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -13,6 +14,7 @@ func GetRoles(c echo.Context) error {
 	var roles []models.Role
 
 	if err := config.DB.Find(&roles).Error; err != nil {
+		log.Println("Failed to fetch data: ", err)
 		return utils.SendResponse(c, nil, "Failed to fetch data", http.StatusInternalServerError)
 	}
 
@@ -30,6 +32,7 @@ func CreateRole(c echo.Context) error {
 	}
 
 	if err := config.DB.Create(&role).Error; err != nil {
+		log.Println("Failed to create role: ", err)
 		return utils.SendResponse(c, nil, "Failed to create role", http.StatusInternalServerError)
 	}
 
@@ -44,6 +47,7 @@ func DeleteRole(c echo.Context) error {
 	}
 
 	if err := config.DB.Delete(&models.Role{}, id).Error; err != nil {
+		log.Println("Failed to delete role: ", err)
 		return utils.SendResponse(c, nil, "Failed to delete role", http.StatusInternalServerError)
 	}
 
