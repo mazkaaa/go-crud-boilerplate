@@ -3,7 +3,7 @@ package routes
 import (
 	"go-crud-boilerplate/controllers"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func RegisterRoutes(e *echo.Echo) {
@@ -12,4 +12,5 @@ func RegisterRoutes(e *echo.Echo) {
 	e.GET("/roles", controllers.GetRoles)
 	e.POST("/roles", controllers.CreateRole)
 	e.GET("/roles/:id", controllers.GetDetailRole)
+	e.DELETE("/roles/:id", controllers.DeleteRole)
 }

@@ -2,43 +2,46 @@
 
 ## Stack
 
-- **Framework**: Echo v4 (`github.com/labstack/echo/v4`)
-- **ORM**: GORM (`gorm.io/gorm`)
-- **Database**: PostgreSQL (`gorm.io/driver/postgres`, `pgx/v5`)
-- **Auth**: bcrypt via `golang.org/x/crypto`, JWT lib present but not wired
+- **Framework**: Echo v5 (`github.com/labstack/echo/v5`)
+- **Database**: PostgreSQL via `pgx/v5` (`pgxpool` connection pool), raw SQL
+- **Migrations**: `golang-migrate/v4` (`file://` source, runs on boot)
+- **Auth**: bcrypt via `golang.org/x/crypto`
 - **Env**: `github.com/joho/godotenv` — `.env` required at startup
 
 ## Setup
 
 1. Copy `.env.examples` to `.env` and fill in PostgreSQL credentials.
-2. `go run server.go` — starts on `:1323`, runs auto-migrate + seed on boot.
+2. `go run server.go` — runs migrations + seed on boot, then starts on `:1323`.
 
 Seeds an `admin` role + admin user from `SEED_NAME`, `SEED_EMAIL`, `SEED_PASSWORD` env vars if the roles table is empty. `FRONTEND_URL` env var is declared but unused.
 
 ## Architecture
 
 ```
-server.go          — entrypoint, CORS, logger middleware
+server.go          — entrypoint, migrator, CORS/logger/recover middleware
+migrations/
+  000001_*.sql     — versioned DDL (CREATE TABLE users, roles)
 config/
-  database.go      — GORM connection (DSN from env, sslmode=disable)
-  seed.go          — roles + admin seed
+  database.go      — pgxpool connection (postgres:// DSN from env)
+  seed.go          — roles + admin seed (raw SQL INSERT)
 models/
   user.go          — UUID PK via gen_random_uuid(), json:"-" on password & role
   role.go          — UUID PK, has-many Users relationship
   response.go      — APIResponse struct
 controllers/
-  user.go          — FormValue-based (not JSON body), hash_password + Role lookup
-  role.go          — name uniqueness check, Preload("Users") on detail
+  user.go          — raw SQL via pgxpool (SELECT/INSERT with RETURNING, manual Scan)
+  role.go          — raw SQL via pgxpool, two-query eager-load in GetDetailRole
 routes/
-  routes.go        — GET/POST /users, GET/POST /roles, GET /roles/:id
+  routes.go        — GET/POST /users, GET/POST/DELETE /roles, GET /roles/:id
 utils/
   response_helper.go  — uniform JSON envelope {data, message, status}
   hash_password.go    — bcrypt.DefaultCost
 ```
 
 - All controllers use `c.FormValue()` — requests must be form-encoded, not JSON.
-- `DeleteRole` is defined in `controllers/role.go` but **not registered** in routes.
-- All handler errors use `log.Fatal` (crashes the server) rather than graceful error returns.
+- All handlers use `c *echo.Context` (echo v5 concrete struct, not interface).
+- `RoleID` in `User` is `*string` (nullable, matches `ON DELETE SET NULL` FK).
+- Query params are parameterized with `$1, $2...` — safe from SQL injection.
 
 ## Testing
 

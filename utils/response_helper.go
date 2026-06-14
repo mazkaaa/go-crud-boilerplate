@@ -3,10 +3,10 @@ package utils
 import (
 	"go-crud-boilerplate/models"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
-func SendResponse(c echo.Context, data interface{}, message string, status int) error {
+func SendResponse(c *echo.Context, data interface{}, message string, status int) error {
 	response := models.APIResponse{
 		Data:    data,
 		Message: message,

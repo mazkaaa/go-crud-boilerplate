@@ -1,7 +1,7 @@
 package config
 
 import (
-	"go-crud-boilerplate/models"
+	"context"
 	"log"
 	"os"
 
@@ -9,12 +9,18 @@ import (
 )
 
 func SeedRolesAndAdmin() {
-	var roleCount int64
-	DB.Model(&models.Role{}).Count(&roleCount)
+	var count int
+	err := Pool.QueryRow(context.Background(), "SELECT COUNT(*) FROM roles").Scan(&count)
+	if err != nil {
+		log.Fatalf("failed to count roles: %v", err)
+	}
 
-	if roleCount == 0 {
-		adminRole := models.Role{Name: "admin"}
-		if err := DB.Create(&adminRole).Error; err != nil {
+	if count == 0 {
+		var roleID string
+		err := Pool.QueryRow(context.Background(),
+			"INSERT INTO roles (name) VALUES ($1) RETURNING id", "admin",
+		).Scan(&roleID)
+		if err != nil {
 			log.Fatalf("failed to create default role: %v", err)
 		}
 
@@ -23,14 +29,14 @@ func SeedRolesAndAdmin() {
 			log.Fatalf("failed to hash password: %v", err)
 		}
 
-		adminUser := models.User{
-			Name:     os.Getenv("SEED_NAME"),
-			Email:    os.Getenv("SEED_EMAIL"),
-			Password: string(passwordHash),
-			Role:     adminRole,
-		}
-
-		if err := DB.Create(&adminUser).Error; err != nil {
+		_, err = Pool.Exec(context.Background(),
+			"INSERT INTO users (name, email, password, role_id) VALUES ($1, $2, $3, $4)",
+			os.Getenv("SEED_NAME"),
+			os.Getenv("SEED_EMAIL"),
+			string(passwordHash),
+			roleID,
+		)
+		if err != nil {
 			log.Fatalf("failed to create default admin user: %v", err)
 		}
 		log.Println("default admin role and user created successfully")

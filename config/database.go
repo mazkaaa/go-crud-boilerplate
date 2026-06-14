@@ -1,31 +1,36 @@
 package config
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"os"
 
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var DB *gorm.DB
+var Pool *pgxpool.Pool
 
-func DBConnect() {
+func DBConnect() error {
 	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Shanghai",
-		os.Getenv("DB_HOST"),     // e.g., "localhost"
-		os.Getenv("DB_USER"),     // e.g., "postgres"
-		os.Getenv("DB_PASSWORD"), // e.g., "password"
-		os.Getenv("DB_NAME"),     // e.g., "mydb"
-		os.Getenv("DB_PORT"),     // e.g., "5432"
+		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		os.Getenv("DB_USER"),
+		os.Getenv("DB_PASSWORD"),
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_PORT"),
+		os.Getenv("DB_NAME"),
 	)
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	pool, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
-		log.Fatal("failed to connect to database: ", err)
+		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	DB = db
-	fmt.Println("database connection establised!")
+	if err := pool.Ping(context.Background()); err != nil {
+		pool.Close()
+		return fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	Pool = pool
+	fmt.Println("database connection established!")
+	return nil
 }
