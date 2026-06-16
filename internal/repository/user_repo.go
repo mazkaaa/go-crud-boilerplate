@@ -35,6 +35,58 @@ func (r *UserRepo) FindAll(ctx context.Context) ([]domain.User, error) {
 	return users, nil
 }
 
+var userAllowedSorts = map[string]string{
+	"id":         "id",
+	"name":       "name",
+	"email":      "email",
+	"created_at": "created_at",
+	"updated_at": "updated_at",
+}
+
+func sanitizeSortBy(input string, allowed map[string]string) string {
+	if col, ok := allowed[input]; ok {
+		return col
+	}
+	return "created_at"
+}
+
+func (r *UserRepo) FindAllPaginated(ctx context.Context, params domain.PaginationParams) (domain.PaginatedResult, error) {
+	sortBy := sanitizeSortBy(params.SortBy, userAllowedSorts)
+	offset := (params.Page - 1) * params.Limit
+
+	query := fmt.Sprintf("SELECT id, name, email, role_id, created_at, updated_at FROM users ORDER BY %s %s LIMIT $1 OFFSET $2",
+		sortBy, params.SortOrder)
+
+	rows, err := r.pool.Query(ctx, query, params.Limit, offset)
+	if err != nil {
+		return domain.PaginatedResult{}, fmt.Errorf("query users paginated: %w", err)
+	}
+	defer rows.Close()
+
+	var users []domain.User
+	for rows.Next() {
+		var u domain.User
+		if err := rows.Scan(&u.ID, &u.Name, &u.Email, &u.RoleID, &u.CreatedAt, &u.UpdatedAt); err != nil {
+			return domain.PaginatedResult{}, fmt.Errorf("scan user: %w", err)
+		}
+		users = append(users, u)
+	}
+
+	var total int
+	err = r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM users").Scan(&total)
+	if err != nil {
+		return domain.PaginatedResult{}, fmt.Errorf("count users: %w", err)
+	}
+
+	return domain.PaginatedResult{
+		Items:      users,
+		Total:      total,
+		Page:       params.Page,
+		Limit:      params.Limit,
+		TotalPages: domain.ComputeTotalPages(total, params.Limit),
+	}, nil
+}
+
 func (r *UserRepo) Create(ctx context.Context, name, email, password, roleID string) (domain.User, error) {
 	var u domain.User
 	err := r.pool.QueryRow(ctx,

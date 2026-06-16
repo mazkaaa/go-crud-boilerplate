@@ -10,7 +10,7 @@ import (
 )
 
 type UserService struct {
-	repo domain.UserRepository
+	repo     domain.UserRepository
 	roleRepo domain.RoleRepository
 }
 
@@ -18,12 +18,13 @@ func NewUserService(repo domain.UserRepository, roleRepo domain.RoleRepository) 
 	return &UserService{repo: repo, roleRepo: roleRepo}
 }
 
-func (s *UserService) GetUsers(ctx context.Context) ([]domain.User, error) {
-	users, err := s.repo.FindAll(ctx)
+func (s *UserService) GetUsers(ctx context.Context, params domain.PaginationParams) (domain.PaginatedResult, error) {
+	params.Sanitize()
+	result, err := s.repo.FindAllPaginated(ctx, params)
 	if err != nil {
-		return nil, domain.ErrInternal
+		return domain.PaginatedResult{}, domain.ErrInternal
 	}
-	return users, nil
+	return result, nil
 }
 
 func (s *UserService) CreateUser(ctx context.Context, name, email, password, roleID string) (domain.User, error) {

@@ -20,4 +20,5 @@ type UserRepository interface {
 	FindAll(ctx context.Context) ([]User, error)
 	Create(ctx context.Context, name, email, password, roleID string) (User, error)
 	FindByRoleID(ctx context.Context, roleID string) ([]User, error)
+	FindAllPaginated(ctx context.Context, params PaginationParams) (PaginatedResult, error)
 }

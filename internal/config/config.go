@@ -15,15 +15,15 @@ import (
 )
 
 type Config struct {
-	DBHost        string
-	DBUser        string
-	DBPassword    string
-	DBName        string
-	DBPort        string
-	ServerPort    string
-	SeedName      string
-	SeedEmail     string
-	SeedPassword  string
+	DBHost       string
+	DBUser       string
+	DBPassword   string
+	DBName       string
+	DBPort       string
+	ServerPort   string
+	SeedName     string
+	SeedEmail    string
+	SeedPassword string
 }
 
 func Load() Config {

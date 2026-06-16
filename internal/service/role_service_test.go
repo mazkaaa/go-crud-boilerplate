@@ -16,12 +16,16 @@ func TestGetRoles(t *testing.T) {
 	}
 	svc := NewRoleService(repo)
 
-	roles, err := svc.GetRoles(context.Background())
+	result, err := svc.GetRoles(context.Background(), domain.PaginationParams{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+	roles := result.Items.([]domain.Role)
 	if len(roles) != 2 {
 		t.Fatalf("expected 2 roles, got %d", len(roles))
+	}
+	if result.Total != 2 {
+		t.Fatalf("expected total 2, got %d", result.Total)
 	}
 }
 

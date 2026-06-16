@@ -21,4 +21,5 @@ type RoleRepository interface {
 	ExistsByName(ctx context.Context, name string) (bool, error)
 	ExistsByID(ctx context.Context, id string) (bool, error)
 	FindByIDWithUsers(ctx context.Context, id string) (Role, error)
+	FindAllPaginated(ctx context.Context, params PaginationParams) (PaginatedResult, error)
 }

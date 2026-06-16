@@ -20,9 +20,9 @@ func (m *mockUserRepo) Create(ctx context.Context, name, email, password, roleID
 		return domain.User{}, m.err
 	}
 	u := domain.User{
-		ID:    "generated-id",
-		Name:  name,
-		Email: email,
+		ID:     "generated-id",
+		Name:   name,
+		Email:  email,
 		RoleID: &roleID,
 	}
 	return u, nil
@@ -32,11 +32,25 @@ func (m *mockUserRepo) FindByRoleID(ctx context.Context, roleID string) ([]domai
 	return m.users, m.err
 }
 
+func (m *mockUserRepo) FindAllPaginated(ctx context.Context, params domain.PaginationParams) (domain.PaginatedResult, error) {
+	if m.err != nil {
+		return domain.PaginatedResult{}, m.err
+	}
+	total := len(m.users)
+	return domain.PaginatedResult{
+		Items:      m.users,
+		Total:      total,
+		Page:       params.Page,
+		Limit:      params.Limit,
+		TotalPages: domain.ComputeTotalPages(total, params.Limit),
+	}, nil
+}
+
 type mockRoleRepo struct {
-	roles   []domain.Role
-	role    domain.Role
-	exists  bool
-	err     error
+	roles  []domain.Role
+	role   domain.Role
+	exists bool
+	err    error
 }
 
 func (m *mockRoleRepo) FindAll(ctx context.Context) ([]domain.Role, error) {
@@ -67,6 +81,20 @@ func (m *mockRoleRepo) FindByIDWithUsers(ctx context.Context, id string) (domain
 	return m.role, m.err
 }
 
+func (m *mockRoleRepo) FindAllPaginated(ctx context.Context, params domain.PaginationParams) (domain.PaginatedResult, error) {
+	if m.err != nil {
+		return domain.PaginatedResult{}, m.err
+	}
+	total := len(m.roles)
+	return domain.PaginatedResult{
+		Items:      m.roles,
+		Total:      total,
+		Page:       params.Page,
+		Limit:      params.Limit,
+		TotalPages: domain.ComputeTotalPages(total, params.Limit),
+	}, nil
+}
+
 func TestGetUsers(t *testing.T) {
 	repo := &mockUserRepo{
 		users: []domain.User{
@@ -76,12 +104,22 @@ func TestGetUsers(t *testing.T) {
 	}
 	svc := NewUserService(repo, &mockRoleRepo{})
 
-	users, err := svc.GetUsers(context.Background())
+	result, err := svc.GetUsers(context.Background(), domain.PaginationParams{})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+	users := result.Items.([]domain.User)
 	if len(users) != 2 {
 		t.Fatalf("expected 2 users, got %d", len(users))
+	}
+	if result.Total != 2 {
+		t.Fatalf("expected total 2, got %d", result.Total)
+	}
+	if result.Page != 1 {
+		t.Fatalf("expected page 1, got %d", result.Page)
+	}
+	if result.TotalPages != 1 {
+		t.Fatalf("expected total_pages 1, got %d", result.TotalPages)
 	}
 }
 

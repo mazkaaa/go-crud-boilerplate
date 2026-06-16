@@ -35,6 +35,50 @@ func (r *RoleRepo) FindAll(ctx context.Context) ([]domain.Role, error) {
 	return roles, nil
 }
 
+var roleAllowedSorts = map[string]string{
+	"id":         "id",
+	"name":       "name",
+	"created_at": "created_at",
+	"updated_at": "updated_at",
+}
+
+func (r *RoleRepo) FindAllPaginated(ctx context.Context, params domain.PaginationParams) (domain.PaginatedResult, error) {
+	sortBy := sanitizeSortBy(params.SortBy, roleAllowedSorts)
+	offset := (params.Page - 1) * params.Limit
+
+	query := fmt.Sprintf("SELECT id, name, created_at, updated_at FROM roles ORDER BY %s %s LIMIT $1 OFFSET $2",
+		sortBy, params.SortOrder)
+
+	rows, err := r.pool.Query(ctx, query, params.Limit, offset)
+	if err != nil {
+		return domain.PaginatedResult{}, fmt.Errorf("query roles paginated: %w", err)
+	}
+	defer rows.Close()
+
+	var roles []domain.Role
+	for rows.Next() {
+		var ro domain.Role
+		if err := rows.Scan(&ro.ID, &ro.Name, &ro.CreatedAt, &ro.UpdatedAt); err != nil {
+			return domain.PaginatedResult{}, fmt.Errorf("scan role: %w", err)
+		}
+		roles = append(roles, ro)
+	}
+
+	var total int
+	err = r.pool.QueryRow(ctx, "SELECT COUNT(*) FROM roles").Scan(&total)
+	if err != nil {
+		return domain.PaginatedResult{}, fmt.Errorf("count roles: %w", err)
+	}
+
+	return domain.PaginatedResult{
+		Items:      roles,
+		Total:      total,
+		Page:       params.Page,
+		Limit:      params.Limit,
+		TotalPages: domain.ComputeTotalPages(total, params.Limit),
+	}, nil
+}
+
 func (r *RoleRepo) Create(ctx context.Context, name string) (domain.Role, error) {
 	var ro domain.Role
 	err := r.pool.QueryRow(ctx,

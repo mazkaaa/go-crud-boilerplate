@@ -7,6 +7,7 @@ import (
 	"go-crud-boilerplate/internal/service"
 	"go-crud-boilerplate/pkg/response"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v5"
 )
@@ -20,11 +21,30 @@ func NewUserHandler(svc *service.UserService) *UserHandler {
 }
 
 func (h *UserHandler) GetUsers(c *echo.Context) error {
-	users, err := h.svc.GetUsers(c.Request().Context())
+	page, _ := strconv.Atoi(c.QueryParam("page"))
+	limit, _ := strconv.Atoi(c.QueryParam("limit"))
+	sortBy := c.QueryParam("sort_by")
+	sortOrder := c.QueryParam("sort_order")
+
+	params := domain.PaginationParams{
+		Page:      page,
+		Limit:     limit,
+		SortBy:    sortBy,
+		SortOrder: sortOrder,
+	}
+
+	result, err := h.svc.GetUsers(c.Request().Context(), params)
 	if err != nil {
 		return response.Send(c, nil, "Failed to fetch users", http.StatusInternalServerError)
 	}
-	return response.Send(c, users, "Success", http.StatusOK)
+
+	meta := response.PaginationMeta{
+		Page:       result.Page,
+		Limit:      result.Limit,
+		Total:      result.Total,
+		TotalPages: result.TotalPages,
+	}
+	return response.SendPaginated(c, result.Items, meta, "Success", http.StatusOK)
 }
 
 func (h *UserHandler) CreateUser(c *echo.Context) error {

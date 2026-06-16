@@ -14,12 +14,13 @@ func NewRoleService(repo domain.RoleRepository) *RoleService {
 	return &RoleService{repo: repo}
 }
 
-func (s *RoleService) GetRoles(ctx context.Context) ([]domain.Role, error) {
-	roles, err := s.repo.FindAll(ctx)
+func (s *RoleService) GetRoles(ctx context.Context, params domain.PaginationParams) (domain.PaginatedResult, error) {
+	params.Sanitize()
+	result, err := s.repo.FindAllPaginated(ctx, params)
 	if err != nil {
-		return nil, domain.ErrInternal
+		return domain.PaginatedResult{}, domain.ErrInternal
 	}
-	return roles, nil
+	return result, nil
 }
 
 func (s *RoleService) CreateRole(ctx context.Context, name string) (domain.Role, error) {
